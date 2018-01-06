@@ -218,6 +218,8 @@ from sklearn import preprocessing
 
 le = preprocessing.LabelEncoder()
 
+df = df.drop(["NOTEDIAGNOSTIC"],axis = 1)
+
 
 column = ["CODE","CODE_PARENT","DIAMETREARBREAUNMETRE","ESPECE","FREQUENTATIONCIBLE","GENRE_BOTA","NOTEDIAGNOSTIC","PRIORITEDERENOUVELLEMENT","SOUS_CATEGORIE","SOUS_CATEGORIE_DESC","STADEDEDEVELOPPEMENT","STADEDEVELOPPEMENTDIAG","TROTTOIR","VIGUEUR"]
 
@@ -227,6 +229,7 @@ for column1 in column:
 ##Dictionnaire regroupant tous les résultats##
 res_pred = {}
 
+df.to_csv("donnéesNetoyés",sep = ",")
 
 ####PREDICTION LABEL UNIQUE####
 res_pred["Prediction_label_unique"] = {}
@@ -252,7 +255,6 @@ from sklearn.model_selection import GridSearchCV
 
 parameters = {'criterion' : ['gini','entropy'], 'max_depth' : [2,5,7,10,12,15,18],'max_features' : [3,4,5,6,7,'auto'] }
 
-df = df.drop(["NOTEDIAGNOSTIC"],axis = 1)
 
 
 feature_importance_data_frame = tuning_arbre("tuning_accuracy","accuracy",parameters,"Prétraitement_basique","Prediction_label_unique")
@@ -468,7 +470,7 @@ pos["defaut"] = df["DEFAUT"]
 summary_pos = pd.DataFrame(pos.groupby('cluster')['defaut'].mean())
 summary_pos.plot(kind='bar')
 
-
+###ANALYSE FACTORIELLE MULTIPLE###
 
 
 
