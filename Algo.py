@@ -105,6 +105,7 @@ def tuning_RDF(nom_tuning,critère_de_tuning,parameters,type_pretraitement,type_
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 ##Suppression des données ##
 
@@ -328,4 +329,146 @@ rdf.fit(xtrain,ytrain)
 
 ypred2 = rdf.predict(xtest)
 accuracy_rdf = accuracy_score(ypred2,ytest)
+
+######################################################Exploration du jeu données#####################################################
+
+###Cluster en fonction des distances###
+
+
+##KMeans##
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+pos = df[["coord_x","coord_y"]]
+wcss = []
+for i in range(1,20):
+    kmeans = KMeans(n_clusters = i, init = 'k-means++', max_iter = 300, n_init = 10 ,random_state = 0)
+    kmeans.fit(pos)
+    wcss.append(kmeans.inertia_)
+    
+plt.figure()
+plt.plot(range(1,20),wcss)
+plt.title("elbow method")
+plt.xlabel("Number of cluster")
+plt.ylabel("WCSS")
+plt.show()
+
+##5 clusters##
+
+kmeans =  KMeans(n_clusters = 5, init = 'k-means++', max_iter = 400, n_init = 10 ,random_state = 0)
+y_means = kmeans.fit_predict(pos)
+
+sls_kmeans = silhouette_score(pos,y_means)
+pos_array = pos.values
+
+plt.figure()
+plt.scatter(pos_array[y_means == 0,0],pos_array[y_means == 0,1],s = 100, c = "red" , label = "cluster 0")
+plt.scatter(pos_array[y_means == 1,0],pos_array[y_means == 1,1],s = 100, c = "green" , label = "cluster 1")
+plt.scatter(pos_array[y_means == 2,0],pos_array[y_means == 2,1],s = 100, c = "blue" , label = "cluster 2")
+plt.scatter(pos_array[y_means == 3,0],pos_array[y_means == 3,1],s = 100, c = "orange" , label = "cluster 3")
+plt.scatter(pos_array[y_means == 4,0],pos_array[y_means == 4,1],s = 100, c = "black" , label = "cluster 4")
+plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1],s = 300,c = "yellow",label = "centroid")
+plt.title("Cluster")
+plt.xlabel("coord_x")
+plt.xlabel("coord_y")
+plt.legend()
+plt.show()
+
+pos["cluster"] = y_means
+pos["defaut"] = df["DEFAUT"]
+
+summary_pos = pd.DataFrame(pos.groupby('cluster')['defaut'].mean())
+summary_pos.plot(kind='bar')
+
+
+##8 clusters##
+kmeans =  KMeans(n_clusters = 8, init = 'k-means++', max_iter = 400, n_init = 10 ,random_state = 0)
+y_means = kmeans.fit_predict(pos)
+
+sls_kmeans = silhouette_score(pos,y_means)
+pos_array = pos.values
+
+plt.figure()
+plt.scatter(pos_array[y_means == 0,0],pos_array[y_means == 0,1],s = 100, c = "red" , label = "cluster 0")
+plt.scatter(pos_array[y_means == 1,0],pos_array[y_means == 1,1],s = 100, c = "green" , label = "cluster 1")
+plt.scatter(pos_array[y_means == 2,0],pos_array[y_means == 2,1],s = 100, c = "blue" , label = "cluster 2")
+plt.scatter(pos_array[y_means == 3,0],pos_array[y_means == 3,1],s = 100, c = "grey" , label = "cluster 3")
+plt.scatter(pos_array[y_means == 4,0],pos_array[y_means == 4,1],s = 100, c = "black" , label = "cluster 4")
+plt.scatter(pos_array[y_means == 5,0],pos_array[y_means == 5,1],s = 100, c = "orange" , label = "cluster 5")
+plt.scatter(pos_array[y_means == 6,0],pos_array[y_means == 6,1],s = 100, c = "brown" , label = "cluster 6")
+plt.scatter(pos_array[y_means == 7,0],pos_array[y_means == 7,1],s = 100, c = "purple" , label = "cluster 7")
+plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1],s = 300,c = "yellow",label = "centroid")
+plt.title("Cluster")
+plt.xlabel("coord_x")
+plt.xlabel("coord_y")
+plt.legend()
+plt.show()
+
+pos["cluster"] = y_means
+pos["defaut"] = df["DEFAUT"]
+
+summary_pos = pd.DataFrame(pos.groupby('cluster')['defaut'].mean())
+summary_pos.plot(kind='bar')
+
+
+
+
+##HDBScan##
+import hdbscan
+
+##min_size : 375##
+
+pos = df[["coord_x","coord_y"]]
+hdb = hdbscan.HDBSCAN(min_cluster_size=375, gen_min_span_tree=True)
+y_hdb= hdb.fit_predict(pos)
+sls_hdb = silhouette_score(pos,y_hdb)
+
+nb_clus_hdb = np.max(np.unique(y_hdb)) - np.min(np.unique(y_hdb)) + 1
+
+plt.figure()
+plt.scatter(pos_array[y_hdb == -1,0],pos_array[y_hdb == -1,1],s = 100, c = "black" , label = "outlier")
+plt.scatter(pos_array[y_hdb == 0,0],pos_array[y_hdb == 0,1],s = 100, c = "red" , label = "cluster 0")
+plt.scatter(pos_array[y_hdb == 1,0],pos_array[y_hdb == 1,1],s = 100, c = "green" , label = "cluster 1")
+plt.scatter(pos_array[y_hdb == 2,0],pos_array[y_hdb == 2,1],s = 100, c = "blue" , label = "cluster 2")
+plt.title("Cluster")
+plt.xlabel("coord_x")
+plt.xlabel("coord_y")
+plt.legend()
+plt.show()
+
+pos["cluster"] = y_hdb
+pos["defaut"] = df["DEFAUT"]
+
+summary_pos = pd.DataFrame(pos.groupby('cluster')['defaut'].mean())
+summary_pos.plot(kind='bar')
+
+##min_size = 200##
+
+pos = df[["coord_x","coord_y"]]
+hdb = hdbscan.HDBSCAN(min_cluster_size=125, gen_min_span_tree=True)
+y_hdb= hdb.fit_predict(pos)
+sls_hdb = silhouette_score(pos,y_hdb)
+
+nb_clus_hdb = np.max(np.unique(y_hdb)) - np.min(np.unique(y_hdb)) + 1
+
+plt.figure()
+plt.scatter(pos_array[y_hdb == -1,0],pos_array[y_hdb == -1,1],s = 100, c = "black" , label = "outlier")
+plt.scatter(pos_array[y_hdb == 0,0],pos_array[y_hdb == 0,1],s = 100, c = "red" , label = "cluster 0")
+plt.scatter(pos_array[y_hdb == 1,0],pos_array[y_hdb == 1,1],s = 100, c = "green" , label = "cluster 1")
+plt.scatter(pos_array[y_hdb == 2,0],pos_array[y_hdb == 2,1],s = 100, c = "blue" , label = "cluster 2")
+plt.title("Cluster")
+plt.xlabel("coord_x")
+plt.xlabel("coord_y")
+plt.legend()
+plt.show()
+
+pos["cluster"] = y_hdb
+pos["defaut"] = df["DEFAUT"]
+
+summary_pos = pd.DataFrame(pos.groupby('cluster')['defaut'].mean())
+summary_pos.plot(kind='bar')
+
+
+
+
 
